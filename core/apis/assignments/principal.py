@@ -12,4 +12,18 @@ def list_teachers(p):
     teachers = Teacher.get_all_teachers()  
     teachers_dump = TeacherSchema().dump(teachers, many=True) 
     return APIResponse.respond(data=teachers_dump)
-
+@principal_bp.route('/assignments/grade', methods=['POST'], strict_slashes=False)
+@decorators.accept_payload
+@decorators.authenticate_principal
+def grade_assignment(p, incoming_payload):
+    """Grade or re-grade an assignment"""
+    grade_payload = AssignmentGradeSchema().load(incoming_payload)
+    
+    graded_assignment = Assignment.grade_or_regrade(
+        _id=grade_payload.id,
+        grade=grade_payload.grade,
+        auth_principal=p
+    )
+    db.session.commit()
+    graded_assignment_dump = AssignmentSchema().dump(graded_assignment)
+    return APIResponse.respond(data=graded_assignment_dump)
